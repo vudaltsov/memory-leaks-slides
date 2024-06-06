@@ -85,6 +85,26 @@
         </section>
 
         <section>
+            <h3>Ставь RoadRunner сегодня вечером!</h3>
+        </section>
+
+        <section>
+            <h4><a href="https://github.com/roadrunner-server/roadrunner/blob/1c1abb483d3e00d901d7c6279c8e4d09a5621871/.rr.yaml#L349">max_worker_memory</a></h4>
+            <pre>
+                <code class="yaml" data-trim data-line-numbers="">
+                    http:
+                      address: 0.0.0.0:80
+                      pool:
+                        debug: false
+                        num_workers: 20
+                        supervisor:
+                          # выставляй ~80-90% от memory_limit
+                          max_worker_memory: 100
+                </code>
+            </pre>
+        </section>
+
+        <section>
             <h2>Не мешай PHP убираться!</h2>
         </section>
 
@@ -109,13 +129,13 @@
         </section>
         
         <section>
+            <h4><a href="https://github.com/composer/composer/pull/8200">composer/composer#8200</a></h4>
             <img src="free-solver-variable-asap.png" alt="">
-            <p><a href="https://github.com/composer/composer/pull/8200">composer/composer#8200</a></p>
         </section>
 
         <section>
+            <h4><a href="https://github.com/composer/composer/pull/8200/files">composer/composer#8200</a></h4>
             <img src="free-solver-variable-asap-code.png" alt="">
-            <p><a href="https://github.com/composer/composer/pull/8200/files">composer/composer#8200</a></p>
         </section>
 
         <section>
@@ -203,6 +223,7 @@
         </section>
 
         <section>
+            <h4><a href="https://github.com/nikic/PHP-Parser/issues/980">nikic/PHP-Parser#8200</a></h4>
             <pre>
                 <code class="language-php" data-trim data-line-numbers="">
                     use PhpParser\Lexer;
@@ -221,7 +242,6 @@
                     // 8853888
                 </code>
             </pre>
-            <p><a href="https://github.com/nikic/PHP-Parser/issues/980">nikic/PHP-Parser#8200</a></p>
         </section>
 
         <section>
@@ -237,7 +257,6 @@
                                 1 => function ($stackPos) {
                                      $this->semValue = $this->handleNamespaces(/** ... */);
                                 },
-
                                 // ...
                             ];
                         }
@@ -247,6 +266,7 @@
         </section>
 
         <section>
+            <h4><a href="https://github.com/nikic/PHP-Parser/commit/af14fdb282aa0e288bfe7eb3b57893484b68dc27">nikic/PHP-Parser#af14fdb</a></h4>
             <pre>
                 <code class="language-php" data-trim data-line-numbers="">
                     class Php8 extends ParserAbstract
@@ -259,7 +279,6 @@
                                 1 => static function ($self, $stackPos) {
                                      $self->semValue = $self->handleNamespaces(/** ... */);
                                 },
-
                                 // ...
                             ];
                         }
@@ -305,8 +324,8 @@
         </section>
 
         <section>
+            <p><a href="https://cs.symfony.com/doc/rules/function_notation/static_lambda.html">PHP-CS-Fixer: static_lambda</a></p>
             <img src="php-cs-fixer-static-lambda.png" alt="">
-            <p><a href="https://cs.symfony.com/doc/rules/function_notation/static_lambda.html">Rule static_lambda</a></p>
         </section>
 
         <section>
@@ -330,11 +349,185 @@
             </pre>
         </section>
 
-        <!--<section>
-            <h3>Полезные материалы</h3>
+        <section>
+            <h3>Мемоизация</h3>
             <ul>
+                <li>Зачем?</li>
+                <li>Где?</li>
+                <li>Сколько?</li>
             </ul>
-        </section>-->
+        </section>
+
+        <section>
+            <h3>Мемоизируешь — вытесняй!</h3>
+        </section>
+
+        <section>
+            <ul>
+                <li>LRU — вытесняется не использованный дольше всего</li>
+                <li>MRU — вытесняется последний использованный</li>
+                <li>LFU — вытесняется реже всего использованный</li>
+                <li>SNLRU, ARC, MQ, 2Q и др.</li>
+            </ul>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="1-6|8-14|16-23|">
+                        /**
+                         * @template T
+                         * @param callable(): T $factory
+                         * @return T
+                         */
+                        public function get(string $key, callable $factory): mixed
+                        {
+                            if (\array_key_exists($key, $this->itemsByKey)) {
+                                $value = $this->items[$key];
+                                unset($this->items[$key]);
+                                $this->items[$key] = $value;
+
+                                return $value;
+                            }
+
+                            $value = $factory();
+                            $this->items[$key] = $value;
+
+                            if (\count($this->items) > $this->capacity) {
+                                array_shift($this->items);
+                            }
+
+                            return $value;
+                        }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h3>Не вытесняешь — чисти!</h3>
+        </section>
+
+        <section>
+            <p><a href="https://symfony.com/doc/current/reference/dic_tags.html#kernel-reset">Symfony kernel.reset tag</a></p>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    return static function (ContainerConfigurator $di): void {
+                        $di->services()
+                            ->defaults()
+                                ->autowire()
+                                ->autoconfigure()
+                            ->set(MyService::class)
+                                ->tag('kernel.reset', ['method' => 'trololoshka']);
+                    };
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <img src="debug-kernel-reset-tag.png" alt="">
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    class Registry
+                    {
+                        // ...
+
+                        public function reset(): void
+                        {
+                            // примерный код
+
+                            foreach ($this->managers as $manager) {
+                                $manager->clear();
+                            }
+                        }
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h3>Инструменты</h3>
+        </section>
+
+        <section>
+            <h4><a href="https://xdebug.org/docs/profiler">Xdebug Profiler</a></h4>
+            <pre>
+                <code class="language-ini" data-trim data-line-numbers="">
+                    xdebug.mode=profile
+                    xdebug.output_dir=/path/to/profiles/dir
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h4><a href="https://www.jetbrains.com/help/phpstorm/profiling-with-xdebug.html#analyze-xdebug-profiling-data">PhpStorm</a></h4>
+            <img src="phpstorm-xdebug-stat.png" alt="">
+        </section>
+
+        <section>
+            <h4><a href="https://www.jetbrains.com/help/phpstorm/profiling-with-xdebug.html#analyze-xdebug-profiling-data">PhpStorm</a></h4>
+            <img src="phpstorm-xdebug-call-tree.png" alt="">
+        </section>
+
+        <section>
+            <h4><a href="https://github.com/arnaud-lb/php-memory-profiler">memprof PHP extension</a></h4>
+            <img src="https://raw.githubusercontent.com/arnaud-lb/php-memory-profiler/v2/assets/qcachegrind.png" alt="">
+        </section>
+
+        <section>
+            <h4><a href="https://blackfire.io/">Blackfire</a></h4>
+            <img src="blackfire.png" alt="">
+            <p><small><a href="https://demo.blackfire.io/profiles/d5f83d3d-ba09-43ee-9e33-51677cf9c988/graph?settings%5Bdimension%5D=pmu&settings%5Bdisplay%5D=landscape&settings%5BtabPane%5D=nodes&selected=Symfony%5CComponent%5CSecurity%5CHttp%5CFirewall%3A%3AcallListeners%3Ffa38f6a383d96bcc49e20a0cf36c3205&callname=main()&constraintDoc=">Открыть этот отчёт</a></small></p>
+        </section>
+
+        <section>
+            <h4><a href="https://github.com/BitOne/php-meminfo">Meminfo</a></h4>
+            <pre>
+                <code class="nohighlight" data-trim data-line-numbers="">
+                    $ bin/analyzer summary dump.json
+
+                    +----------+-----------------+-----------------------------+
+                    | Type     | Instances Count | Cumulated Self Size (bytes) |
+                    +----------+-----------------+-----------------------------+
+                    | string   | 132             | 7079                        |
+                    | MyClassA | 100             | 7200                        |
+                    | array    | 10              | 720                         |
+                    | integer  | 5               | 80                          |
+                    | float    | 2               | 32                          |
+                    | null     | 1               | 16                          |
+                    +----------+-----------------+-----------------------------+
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h4><a href="https://github.com/BitOne/php-meminfo">Meminfo</a></h4>
+            <pre>
+                <code class="nohighlight" data-trim data-line-numbers="">
+                    $ bin/analyzer top-children dump.json
+
+                    +-----+----------------+----------+
+                    | Num | Item ids       | Children |
+                    +-----+----------------+----------+
+                    | 1   | 0x7ffff4e22fe0 | 1000000  |
+                    | 2   | 0x7fffe780e5c8 | 11606    |
+                    | 3   | 0x7fffe9714ef0 | 11602    |
+                    | 4   | 0x7fffeab63ca0 | 3605     |
+                    | 5   | 0x7fffd3161400 | 2400     |
+                    +-----+----------------+----------+
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h4>Полезные ссылки</h4>
+            <ul>
+                <li><a href="https://www.youtube.com/watch?v=r1HDMu7nJh0">Нюансы WeakReference &amp; WeakMap на конкретном примере</a></li>
+                <li><a href="https://www.youtube.com/watch?v=NNMp-97rk9c">Поиск и устранение утечек памяти в PHP</a></li>
+                <li><a href="https://habr.com/ru/companies/surfingbird/articles/306252/">Эффективное кеширование. От теории к практике</a></li>
+            </ul>
+        </section>
 
         <section>
             <h3>Спасибо за внимание!</h3>
