@@ -350,6 +350,110 @@
         </section>
 
         <section>
+            <h3>Читай построчно!</h3>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    final class CsvParser
+                    {
+                        /**
+                         * @return Generator&lt;list&lt;string&gt;&gt;
+                         */
+                        public function parse(string $file): Generator
+                        {
+                            $handler = fopen($file, 'rb');
+                            flock($handler, LOCK_SH);
+
+                            while (false !== $row = fgetcsv($handler)) {
+                                yield $row;
+                            }
+
+                            flock($handler, LOCK_UN);
+                            fclose($handler);
+                        }
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h3>Читай из БД через курсор!</h3>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    final readonly class CursorReader
+                    {
+                        public function __construct(private PDO $connection) {}
+
+                        /** @return Generator&lt;string&gt; */
+                        public function read(): \Generator
+                        {
+                            $cursorName = uniqid('cursor_');
+                            $this->connection->exec(
+                                "declare {$cursorName} cursor for
+                                select id from my_table",
+                            );
+
+                            do {
+                                $batchSize = 0;
+                                $result = $this->connection->query(
+                                    "fetch 1000 from {$cursorName}"
+                                );
+
+                                foreach ($result as ['id' => $id]) {
+                                    ++$batchSize;
+                                    yield $id;
+                                }
+                            } while ($batchSize === 1000);
+                        }
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    $connection = new PDO('...');
+
+                    $reader = new CursorReader($connection);
+
+                    foreach ($reader->read() as $id) {
+                        var_dump($id);
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    $connection = new PDO('...');
+
+                    $reader = new CursorReader($connection);
+
+                    $connection->beginTransaction();
+
+                    try {
+                        foreach ($reader->read() as $id) {
+                            var_dump($id);
+                        }
+
+                        $connection->commit();
+                    } catch (\Throwable $exception) {
+                        $connection->rollback();
+
+                        throw $exception;
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
             <h3>Мемоизация</h3>
             <ul>
                 <li>Зачем?</li>
