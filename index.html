@@ -211,13 +211,25 @@
         </section>
 
         <section>
+            <h3>Попробуй выключить GC!</h3>
+        </section>
+        
+        <section >
+            <img src="composer-disable-gc.png" alt="" style="width: 60%;"><br>
+            <img src="composer-disable-gc-diff.png" alt="" style="width: 60%">
+        </section>
+
+        <section>
             <pre>
                 <code class="language-php" data-trim data-line-numbers="">
-                    class Foo
+                    final readonly class Foo
                     {
-                        // ...
+                        /**
+                         * @var list&lt;Closure&gt;
+                         */
+                        private array $callbacks;
 
-                        private function initCallbacks(): void
+                        public function __construct()
                         {
                             $this->callbacks = [
                                 function ($stackPos) {
@@ -681,11 +693,15 @@
         </section>
 
         <section>
-            <h4>Полезные ссылки</h4>
+            <h3>Полезные ссылки</h3>
             <ul>
+                <li><a href="https://www.php.net/manual/en/features.gc.php">PHP: Garbage Collection</a></li>
+                <li><a href="https://blog.ircmaxell.com/2014/12/what-about-garbage.html">What About Garbage?</a></li>
+                <li><a href="https://habr.com/ru/companies/surfingbird/articles/306252/">Эффективное кеширование. От теории к практике</a></li>
+                <li><a href="https://www.postgresql.org/docs/current/sql-copy.html">PostgeSQL Copy</a></li>
+                <li><a href="https://www.php.net/manual/en/pdo.pgsqlcopyfromfile.php">PDO::pgsqlCopyFromFile</a></li>
                 <li><a href="https://www.youtube.com/watch?v=r1HDMu7nJh0">Нюансы WeakReference &amp; WeakMap на конкретном примере</a></li>
                 <li><a href="https://www.youtube.com/watch?v=NNMp-97rk9c">Поиск и устранение утечек памяти в PHP</a></li>
-                <li><a href="https://habr.com/ru/companies/surfingbird/articles/306252/">Эффективное кеширование. От теории к практике</a></li>
             </ul>
         </section>
 
