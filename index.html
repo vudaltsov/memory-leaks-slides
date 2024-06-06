@@ -52,7 +52,7 @@
             width: calc(50% - var(--r-block-margin) * 2) !important;
         }
     </style>
-    <title>Полиморфизм в современном PHP</title>
+    <title>Пишем на PHP и не теряем память!</title>
 </head>
 <body>
 <div class="reveal">
@@ -75,11 +75,257 @@
             <h4><a href="https://wiki.php.net/rfc/new_without_parentheses">✅ RFC: new without parentheses</a></h4>
             <pre>
                 <code class="language-php" data-trim data-line-numbers="">
-                    // OK
-                    $request = (new Request())->withMethod('GET')->withUri('/hello-world');
+                    // PHP <8.4
+                    $request = (new Psr7Request())->withMethod('GET')->withUri('/hello');
 
-                    // OK in PHP >=8.4
-                    $request = new Request()->withMethod('GET')->withUri('/hello-world');
+                    // PHP >=8.4
+                    $request = new Psr7Request()->withMethod('GET')->withUri('/hello');
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h2>Не мешай PHP убираться!</h2>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    $a = 'PHP';
+                    $b = $a;
+                    $c = $a;
+
+                    xdebug_debug_zval('a'); // refcount=3, is_ref=0
+
+                    $b = 42;
+
+                    xdebug_debug_zval('a'); // refcount=2, is_ref=0
+
+                    unset($c);
+
+                    xdebug_debug_zval('a'); // refcount=1, is_ref=0
+                </code>
+            </pre>
+        </section>
+        
+        <section>
+            <img src="free-solver-variable-asap.png" alt="">
+            <p><a href="https://github.com/composer/composer/pull/8200">composer/composer#8200</a></p>
+        </section>
+
+        <section>
+            <img src="free-solver-variable-asap-code.png" alt="">
+            <p><a href="https://github.com/composer/composer/pull/8200/files">composer/composer#8200</a></p>
+        </section>
+
+        <section>
+            <h2>Декомпозируй код!</h2>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    // ...
+
+                    private function getRuleSetSize(/** ... */)
+                    {
+                        $solver = new Solver($policy, $pool, $installedRepo, $this->io);
+
+                        try {
+                            $solver->solve($request, $this->ignorePlatformReqs);
+
+                            return $solver->getRuleSetSize();
+                        } catch (SolverProblemsException $e) {
+                            // ...
+                        }
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h2>Не зацикливай объекты!</h2>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    final class Foo
+                    {
+                        public string $string = 'GC TEST!!!';
+                        public self $self;
+                    }
+
+                    for ($i = 0; $i <= 10_000_000; ++$i) {
+                        $object = new Foo();
+                        $object->self = $object;
+                    }
+
+                    echo memory_get_peak_usage() / 1024 / 1024, PHP_EOL;
+                </code>
+            </pre>
+            <pre class="fragment">
+                <code class="nohighlight" data-trim>
+                    time php -dzend.enable_gc=0 -dmemory_limit=-1 gc-test.php
+
+                    Memory: 891.31MiB
+                    Time:   0.47s
+                </code>
+            </pre>
+            <pre class="fragment">
+                <code class="nohighlight" data-trim>
+                    time php -dzend.enable_gc=1 -dmemory_limit=-1 gc-test.php
+
+                    Memory: 1.26MiB
+                    Time:   0.63s
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    class Foo
+                    {
+                        // ...
+
+                        private function initCallbacks(): void
+                        {
+                            $this->callbacks = [
+                                function ($stackPos) {
+                                     // ...
+                                },
+                            ];
+                        }
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    use PhpParser\Lexer;
+                    use PhpParser\Parser\Php7;
+
+                    gc_disable();
+
+                    for ($i = 0; $i < 4; ++$i) {
+                        new Php7(new Lexer());
+                        echo memory_get_usage().PHP_EOL;
+                    }
+
+                    // 7992640
+                    // 8279744
+                    // 8558624
+                    // 8853888
+                </code>
+            </pre>
+            <p><a href="https://github.com/nikic/PHP-Parser/issues/980">nikic/PHP-Parser#8200</a></p>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    class Php8 extends ParserAbstract
+                    {
+                        // ...
+
+                        protected function initReduceCallbacks(): void
+                        {
+                            $this->reduceCallbacks = [
+                                1 => function ($stackPos) {
+                                     $this->semValue = $this->handleNamespaces(/** ... */);
+                                },
+
+                                // ...
+                            ];
+                        }
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    class Php8 extends ParserAbstract
+                    {
+                        // ...
+
+                        protected function initReduceCallbacks(): void
+                        {
+                            $this->reduceCallbacks = [
+                                1 => static function ($self, $stackPos) {
+                                     $self->semValue = $self->handleNamespaces(/** ... */);
+                                },
+
+                                // ...
+                            ];
+                        }
+
+                        protected function doParse()
+                        {
+                            // ...
+                                    $callback($this, $stackPos);
+                            // ...
+                        }
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h2>Как тестировать?</h2>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    final class PhpParserMemoryTest extends TestCase
+                    {
+                        #[RunInSeparateProcess]
+                        public function testItIsGarbageCollected(): void
+                        {
+                            gc_disable();
+                            $phpParser = (new ParserFactory())->createForHostVersion();
+                            $weakReference = WeakReference::create($phpParser);
+
+                            unset($phpParser);
+
+                            self::assertNull($weakReference->get());
+                        }
+                    }
+                </code>
+            </pre>
+        </section>
+
+        <section>
+            <h2>Используй статические замыкания!</h2>
+        </section>
+
+        <section>
+            <img src="php-cs-fixer-static-lambda.png" alt="">
+            <p><a href="https://cs.symfony.com/doc/rules/function_notation/static_lambda.html">Rule static_lambda</a></p>
+        </section>
+
+        <section>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    final readonly class A
+                    {
+                        public function __construct()
+                        {
+                            static fn (): self => $this;
+                        }
+                    }
+                </code>
+            </pre>
+            <pre>
+                <code class="nohighlight" data-trim>
+                    Psalm output:
+
+                    ERROR: InvalidScope - 5:31 - Invalid reference to $this in a static context
                 </code>
             </pre>
         </section>
