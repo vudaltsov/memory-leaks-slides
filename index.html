@@ -1,0 +1,118 @@
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/theme/simple.min.css" id="theme">
+    <link rel="stylesheet" href="highlight-phpstorm-light-theme.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&family=Roboto+Mono&family=Roboto:wght@400;700&display=swap">
+    <style>
+        :root {
+            --r-main-font: 'Roboto', 'Noto Color Emoji', sans-serif;
+            --r-heading-font: 'Roboto', 'Noto Color Emoji', sans-serif;
+            --r-code-font: 'Roboto Mono', 'Noto Color Emoji', monospace;
+            --r-block-margin: 10px;
+        }
+        .reveal pre {
+            font-size: .50em;
+        }
+        .nohighlight {
+            padding: 1em !important;
+        }
+        .reveal .hljs {
+            min-height: auto;
+        }
+        td.hljs-ln-code {
+            white-space: pre;
+        }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6, .reveal pre, .reveal p, .reveal img {
+            margin: 0 var(--r-block-margin) calc(var(--r-block-margin) * 2);
+        }
+        .reveal pre {
+            width: auto;
+        }
+        .reveal pre code {
+            max-height: none;
+        }
+        .reveal .r-stack > * {
+            margin: 0;
+        }
+        .horizontal {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+        }
+        .horizontal > * {
+            flex-grow: 1;
+        }
+        .horizontal-half > * {
+            flex-grow: 0 !important;
+            width: calc(50% - var(--r-block-margin) * 2) !important;
+        }
+    </style>
+    <title>Полиморфизм в современном PHP</title>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h2>Пишем на PHP и не теряем память!</h2>
+        </section>
+
+        <section>
+            <p><img src="avatar.jpg" alt="" style="max-width: 300px;"></p>
+            <p>Валентин <a href="https://t.me/vudaltsov">@vudaltsov</a></p>
+            <p>
+                <a href="https://t.me/phpyh">Пых</a> /
+                <a href="https://youtube.com/@PHPPoint">PHP Point</a> /
+                <a href="https://t.me/isPHPdying">PHP умирает?!</a>
+            </p>
+        </section>
+
+        <section>
+            <h4><a href="https://wiki.php.net/rfc/new_without_parentheses">✅ RFC: new without parentheses</a></h4>
+            <pre>
+                <code class="language-php" data-trim data-line-numbers="">
+                    // OK
+                    $request = (new Request())->withMethod('GET')->withUri('/hello-world');
+
+                    // OK in PHP >=8.4
+                    $request = new Request()->withMethod('GET')->withUri('/hello-world');
+                </code>
+            </pre>
+        </section>
+
+        <!--<section>
+            <h3>Полезные материалы</h3>
+            <ul>
+            </ul>
+        </section>-->
+
+        <section>
+            <h3>Спасибо за внимание!</h3>
+            <!--<img style="max-width: 40%;" src="qr.png" alt="QR code">-->
+            <p>
+                <a href="https://t.me/vudaltsov">@vudaltsov</a> /
+                <a href="https://t.me/phpyh">Пых</a> /
+                <a href="https://youtube.com/@PHPPoint">PHP Point</a> /
+                <a href="https://t.me/isPHPdying">PHP умирает?!</a>
+            </p>
+        </section>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/reveal.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/plugin/highlight/highlight.min.js"></script>
+<script>
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        plugins: [RevealHighlight],
+        slideNumber: true,
+        autoAnimate: true,
+    });
+</script>
+</body>
+</html>
